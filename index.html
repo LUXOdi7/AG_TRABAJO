@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧬 Algoritmo Genético para TSP - Lambayeque</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1><i class="fas fa-dna"></i> Algoritmo Genético para TSP</h1>
+            <p>Problema del Vendedor Viajero - Ciudades de Lambayeque, Perú</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Control Panel -->
+            <section class="control-panel">
+                <div class="card">
+                    <h2><i class="fas fa-cogs"></i> Configuración</h2>
+                    
+                    <div class="form-group">
+                        <label for="startCity">
+                            <i class="fas fa-map-marker-alt"></i> Ciudad de Inicio:
+                        </label>
+                        <select id="startCity" class="form-control">
+                            <option value="Chiclayo">Chiclayo</option>
+                            <option value="Lambayeque">Lambayeque</option>
+                            <option value="Ferreñafe">Ferreñafe</option>
+                            <option value="Monsefu">Monsefú</option>
+                            <option value="Eten">Eten</option>
+                            <option value="Reque">Reque</option>
+                            <option value="Olmos">Olmos</option>
+                            <option value="Motupe">Motupe</option>
+                            <option value="Pimentel">Pimentel</option>
+                            <option value="Tuman">Tumán</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="populationSize">
+                            <i class="fas fa-users"></i> Tamaño de Población:
+                        </label>
+                        <input type="number" id="populationSize" class="form-control" value="100" min="20" max="500">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="generations">
+                            <i class="fas fa-clock"></i> Generaciones:
+                        </label>
+                        <input type="number" id="generations" class="form-control" value="1000" min="100" max="5000">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mutationRate">
+                            <i class="fas fa-random"></i> Tasa de Mutación:
+                        </label>
+                        <input type="range" id="mutationRate" class="form-control-range" min="0.01" max="0.5" step="0.01" value="0.1">
+                        <span id="mutationValue">0.10</span>
+                    </div>
+
+                    <button id="executeBtn" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Ejecutar Algoritmo Genético
+                    </button>
+                </div>
+            </section>
+
+            <!-- Results Panel -->
+            <section class="results-panel">
+                <!-- Loading Animation -->
+                <div id="loadingPanel" class="card loading-panel" style="display: none;">
+                    <div class="loading-animation">
+                        <div class="dna-spinner">
+                            <div class="dna-strand"></div>
+                            <div class="dna-strand"></div>
+                        </div>
+                        <h3>Ejecutando Algoritmo Genético...</h3>
+                        <p id="loadingStatus">Inicializando población...</p>
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                        <p id="progressText">0%</p>
+                    </div>
+                </div>
+
+                <!-- Results Display -->
+                <div id="resultsPanel" class="card results-display" style="display: none;">
+                    <h2><i class="fas fa-chart-line"></i> Resultados</h2>
+                    
+                    <div class="results-grid">
+                        <!-- Statistics -->
+                        <div class="stats-container">
+                            <h3><i class="fas fa-calculator"></i> Estadísticas</h3>
+                            <div class="stat-item">
+                                <span class="stat-label">Distancia Final:</span>
+                                <span id="finalDistance" class="stat-value">---</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Generaciones:</span>
+                                <span id="totalGenerations" class="stat-value">---</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Tiempo de Ejecución:</span>
+                                <span id="executionTime" class="stat-value">---</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Mejora vs Inicial:</span>
+                                <span id="improvement" class="stat-value">---</span>
+                            </div>
+                        </div>
+
+                        <!-- Route Display -->
+                        <div class="route-container">
+                            <h3><i class="fas fa-route"></i> Mejor Ruta</h3>
+                            <div id="routeDisplay" class="route-display">
+                                <!-- Route will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Container -->
+                    <div class="charts-container">
+                        <div class="chart-item">
+                            <h3><i class="fas fa-map"></i> Visualización de la Ruta</h3>
+                            <div id="routeVisualization" class="chart-canvas">
+                                <canvas id="routeCanvas" width="500" height="400"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-item">
+                            <h3><i class="fas fa-chart-area"></i> Evolución del Algoritmo</h3>
+                            <div id="evolutionChart" class="chart-canvas">
+                                <canvas id="evolutionCanvas" width="500" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Download Results -->
+                    <div class="download-section">
+                        <button id="downloadBtn" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Descargar Resultados
+                        </button>
+                        <button id="newAnalysisBtn" class="btn btn-success">
+                            <i class="fas fa-redo"></i> Nuevo Análisis
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 - Sistema de Algoritmo Genético para TSP | Desarrollado para análisis de optimización</p>
+        </footer>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3><i class="fas fa-exclamation-triangle"></i> Error</h3>
+            <p id="errorMessage">Ha ocurrido un error inesperado.</p>
+            <button class="btn btn-danger" onclick="closeErrorModal()">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
