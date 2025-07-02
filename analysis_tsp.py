@@ -9,7 +9,7 @@ from matplotlib.animation import FuncAnimation
 import os
 from itertools import product
 from copy import deepcopy
-from TSP_GA import (
+from EJECUCION_TSP_GA import (
     CITIES, CITY_NAMES, NUM_CITIES, DISTANCES_MATRIX,
     get_distance_from_matrix, get_total_distance, create_individual,
     evaluate_fitness, crossover, mutate, select_parents
@@ -188,7 +188,7 @@ class TSPAnalyzer:
     
     def _run_genetic_algorithm(self):
         """Ejecutar algoritmo genético simplificado para comparación"""
-        from TSP_GA import POPULATION_SIZE, GENERATIONS
+        from EJECUCION_TSP_GA import POPULATION_SIZE, GENERATIONS
         
         population = [create_individual() for _ in range(POPULATION_SIZE)]
         

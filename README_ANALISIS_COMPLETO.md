@@ -96,7 +96,7 @@ Resultados_TSP/
 
 ### Opción 1: Análisis Completo Integrado
 ```bash
-python TSP_GA.py
+python EJECUCION_TSP_GA.py
 ```
 
 ### Opción 2: Análisis Avanzado Separado

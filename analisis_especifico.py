@@ -11,10 +11,10 @@ import argparse
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from TSP_GA import *
-    print("✓ Módulo TSP_GA importado correctamente")
+    from EJECUCION_TSP_GA import *
+    print("✓ Módulo EJECUCION_TSP_GA importado correctamente")
 except ImportError as e:
-    print(f"❌ Error al importar TSP_GA: {e}")
+    print(f"❌ Error al importar EJECUCION_TSP_GA: {e}")
     sys.exit(1)
 
 def ejecutar_analisis_basico():

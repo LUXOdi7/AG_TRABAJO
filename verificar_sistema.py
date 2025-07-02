@@ -37,11 +37,11 @@ def verificar_funciones():
     """Verificar que todas las funciones estén definidas"""
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     
-    print("\n🔍 VERIFICANDO FUNCIONES TSP_GA")
+    print("\n🔍 VERIFICANDO FUNCIONES EJECUCION_TSP_GA")
     print("-" * 30)
     
     try:
-        from TSP_GA import (
+        from EJECUCION_TSP_GA import (
             # Funciones básicas
             get_distance_from_matrix,
             get_total_distance,
@@ -122,7 +122,7 @@ def main():
     
     if deps_ok and funcs_ok:
         print("✅ Sistema listo para ejecutar análisis básico")
-        print("✅ TSP_GA.py completamente funcional")
+        print("✅ EJECUCION_TSP_GA.py completamente funcional")
         
         if analysis_ok:
             print("✅ Análisis avanzado disponible")
@@ -130,7 +130,7 @@ def main():
             print("⚠️ Análisis avanzado limitado")
         
         print("\n🚀 COMANDOS RECOMENDADOS:")
-        print("   python TSP_GA.py                    # Análisis completo")
+        print("   python EJECUCION_TSP_GA.py         # Análisis completo")
         print("   python analisis_especifico.py       # Análisis selectivo")
         if analysis_ok:
             print("   python analysis_tsp.py              # Análisis avanzado separado")
@@ -144,7 +144,7 @@ def main():
             print("   pip install -r requirements.txt")
         
         if not funcs_ok:
-            print("\n🔧 Revisa el archivo TSP_GA.py")
+            print("\n🔧 Revisa el archivo EJECUCION_TSP_GA.py")
     
     print(f"\n📁 Directorio de trabajo: {os.getcwd()}")
     print(f"📁 Carpeta de resultados: Resultados_TSP/")

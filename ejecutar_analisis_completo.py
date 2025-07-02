@@ -6,12 +6,12 @@ Ejecuta tanto el análisis básico como el avanzado con comparaciones
 import sys
 import os
 
-# Agregar el directorio actual al path para importar TSP_GA
+# Agregar el directorio actual al path para importar EJECUCION_TSP_GA
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Importar el archivo principal
 try:
-    import TSP_GA
+    import EJECUCION_TSP_GA
     from analysis_tsp import TSPAnalyzer
     print("✓ Módulos importados correctamente")
 except ImportError as e:
@@ -26,12 +26,12 @@ def main():
     print("=" * 60)
     
     try:
-        # 1. Ejecutar análisis básico con TSP_GA
+        # 1. Ejecutar análisis básico con EJECUCION_TSP_GA
         print("\n📊 PARTE 1: Análisis Básico del Algoritmo Genético")
         print("-" * 45)
         
-        # Esto ejecutará el código principal de TSP_GA.py
-        exec(open('TSP_GA.py').read())
+        # Esto ejecutará el código principal de EJECUCION_TSP_GA.py
+        exec(open('EJECUCION_TSP_GA.py').read())
         
         print("\n✓ Análisis básico completado")
         
