@@ -3,6 +3,10 @@ import math
 import matplotlib.pyplot as plt
 import os
 import datetime # Para generar nombres de archivos unicos con la fecha y hora
+import time
+import numpy as np
+from matplotlib.animation import FuncAnimation
+from copy import deepcopy
 
 # --- Configuración del Problema del Vendedor Viajero (TSP) ---
 
@@ -450,26 +454,584 @@ def plot_distance_histograms(data_for_hists, generations_for_hists, folder_path)
     print(f"Grafico de distribucion de distancias guardado en '{histograms_filename}'")
 
 
+# --- Nuevas Funciones de Análisis Avanzado ---
+
+def analyze_fitness_evolution(population_history, folder_path):
+    """
+    Analizar la evolución del fitness (mejor, promedio, peor) durante las generaciones
+    """
+    if not population_history:
+        return
+    
+    generations = []
+    best_fitness = []
+    avg_fitness = []
+    worst_fitness = []
+    
+    for gen, population in enumerate(population_history):
+        distances = [get_total_distance(ind) for ind in population]
+        
+        generations.append(gen)
+        best_fitness.append(min(distances))
+        avg_fitness.append(np.mean(distances))
+        worst_fitness.append(max(distances))
+    
+    plt.figure(figsize=(12, 8))
+    plt.plot(generations, best_fitness, 'g-', label='Mejor Fitness', linewidth=2)
+    plt.plot(generations, avg_fitness, 'b-', label='Fitness Promedio', linewidth=2)
+    plt.plot(generations, worst_fitness, 'r-', label='Peor Fitness', linewidth=2)
+    
+    plt.xlabel('Generación')
+    plt.ylabel('Distancia (Fitness)')
+    plt.title('Evolución del Fitness: Mejor/Promedio/Peor por Generación')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    fitness_evolution_filename = os.path.join(folder_path, "fitness_evolution_analysis.png")
+    plt.savefig(fitness_evolution_filename, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Análisis de evolución del fitness guardado en '{fitness_evolution_filename}'")
+
+def calculate_genetic_diversity(population):
+    """
+    Calcular la diversidad genética de una población
+    """
+    if len(population) < 2:
+        return 0
+    
+    total_differences = 0
+    comparisons = 0
+    
+    for i in range(len(population)):
+        for j in range(i + 1, len(population)):
+            # Contar diferencias en posiciones entre dos individuos
+            differences = sum(1 for k in range(len(population[i])) 
+                            if population[i][k] != population[j][k])
+            total_differences += differences
+            comparisons += 1
+    
+    return total_differences / comparisons if comparisons > 0 else 0
+
+def plot_genetic_diversity_evolution(diversity_history, folder_path):
+    """
+    Graficar la evolución de la diversidad genética
+    """
+    if not diversity_history:
+        return
+    
+    plt.figure(figsize=(12, 6))
+    generations = list(range(len(diversity_history)))
+    
+    plt.plot(generations, diversity_history, 'purple', linewidth=2, marker='o', markersize=4)
+    plt.xlabel('Generación')
+    plt.ylabel('Diversidad Genética')
+    plt.title('Evolución de la Diversidad Genética')
+    plt.grid(True, alpha=0.3)
+    
+    # Añadir líneas de referencia
+    max_diversity = max(diversity_history) if diversity_history else 0
+    min_diversity = min(diversity_history) if diversity_history else 0
+    avg_diversity = np.mean(diversity_history) if diversity_history else 0
+    
+    plt.axhline(y=avg_diversity, color='red', linestyle='--', alpha=0.7, 
+                label=f'Diversidad Promedio: {avg_diversity:.2f}')
+    plt.legend()
+    
+    diversity_filename = os.path.join(folder_path, "genetic_diversity_evolution.png")
+    plt.savefig(diversity_filename, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Gráfico de diversidad genética guardado en '{diversity_filename}'")
+
+def create_exploration_exploitation_plot(population_history, folder_path):
+    """
+    Crear gráfico de exploración vs explotación
+    """
+    plt.figure(figsize=(14, 10))
+    
+    generations = []
+    fitness_values = []
+    colors = []
+    
+    # Tomar muestras cada cierto número de generaciones para evitar sobrecarga
+    sample_interval = max(1, len(population_history) // 20)
+    
+    for gen_idx in range(0, len(population_history), sample_interval):
+        population = population_history[gen_idx]
+        
+        # Tomar una muestra de la población para reducir puntos
+        sample_size = min(50, len(population))
+        sampled_population = random.sample(population, sample_size)
+        
+        for individual in sampled_population:
+            generations.append(gen_idx)
+            distance = get_total_distance(individual)
+            fitness_values.append(distance)
+            colors.append(distance)
+    
+    # Crear gráfico de dispersión
+    scatter = plt.scatter(generations, fitness_values, c=colors, cmap='viridis_r', 
+                         alpha=0.6, s=30)
+    plt.colorbar(scatter, label='Distancia (Fitness)')
+    
+    plt.xlabel('Generación')
+    plt.ylabel('Distancia (Fitness) de Individuos')
+    plt.title('Exploración vs Explotación: Distribución de Fitness por Generación')
+    plt.grid(True, alpha=0.3)
+    
+    exploration_filename = os.path.join(folder_path, "exploration_exploitation_analysis.png")
+    plt.savefig(exploration_filename, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Gráfico de exploración vs explotación guardado en '{exploration_filename}'")
+
+def create_fitness_distribution_animation(population_history, folder_path, max_frames=50):
+    """
+    Crear animación de la distribución del fitness a través de las generaciones
+    """
+    if len(population_history) < 2:
+        return
+    
+    # Seleccionar frames para la animación
+    frame_indices = np.linspace(0, len(population_history) - 1, max_frames, dtype=int)
+    
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    
+    def animate(frame_idx):
+        ax1.clear()
+        ax2.clear()
+        
+        gen_idx = frame_indices[frame_idx]
+        population = population_history[gen_idx]
+        distances = [get_total_distance(ind) for ind in population]
+        
+        # Histograma de fitness
+        ax1.hist(distances, bins=15, alpha=0.7, color='skyblue', edgecolor='black')
+        ax1.set_xlabel('Distancia (Fitness)')
+        ax1.set_ylabel('Frecuencia')
+        ax1.set_title(f'Distribución del Fitness - Generación {gen_idx}')
+        ax1.grid(True, alpha=0.3)
+        
+        # Estadísticas acumuladas
+        if gen_idx > 0:
+            all_gen_data = []
+            for i in range(0, gen_idx + 1, max(1, gen_idx // 10)):
+                gen_distances = [get_total_distance(ind) for ind in population_history[i]]
+                all_gen_data.extend([(i, d) for d in gen_distances])
+            
+            if all_gen_data:
+                gens, fits = zip(*all_gen_data)
+                ax2.scatter(gens, fits, alpha=0.3, s=20, c=fits, cmap='viridis_r')
+                ax2.set_xlabel('Generación')
+                ax2.set_ylabel('Distancia (Fitness)')
+                ax2.set_title('Evolución Histórica del Fitness')
+                ax2.grid(True, alpha=0.3)
+    
+    # Crear animación
+    anim = FuncAnimation(fig, animate, frames=len(frame_indices), 
+                        interval=300, repeat=True)
+    
+    animation_filename = os.path.join(folder_path, "fitness_distribution_evolution.gif")
+    anim.save(animation_filename, writer='pillow', fps=3)
+    plt.close()
+    print(f"Animación de distribución del fitness guardada en '{animation_filename}'")
+
+def compare_algorithm_performance(folder_path, num_runs=5):
+    """
+    Comparar el rendimiento del algoritmo genético con otros algoritmos simples
+    """
+    print("Ejecutando comparación de algoritmos...")
+    
+    def hill_climbing_simple():
+        """Implementación simple de Hill Climbing"""
+        current_solution = create_individual()
+        current_distance = get_total_distance(current_solution)
+        
+        distances_history = [current_distance]
+        
+        for _ in range(500):  # Menos iteraciones para acelerar
+            # Generar vecino intercambiando dos ciudades
+            neighbor = current_solution.copy()
+            idx1, idx2 = random.sample(range(len(neighbor)), 2)
+            neighbor[idx1], neighbor[idx2] = neighbor[idx2], neighbor[idx1]
+            
+            neighbor_distance = get_total_distance(neighbor)
+            
+            # Aceptar si es mejor
+            if neighbor_distance < current_distance:
+                current_solution = neighbor
+                current_distance = neighbor_distance
+            
+            distances_history.append(current_distance)
+        
+        return current_solution, distances_history
+    
+    def random_search():
+        """Búsqueda aleatoria"""
+        best_solution = create_individual()
+        best_distance = get_total_distance(best_solution)
+        
+        distances_history = [best_distance]
+        
+        for _ in range(500):
+            candidate = create_individual()
+            candidate_distance = get_total_distance(candidate)
+            
+            if candidate_distance < best_distance:
+                best_solution = candidate
+                best_distance = candidate_distance
+            
+            distances_history.append(best_distance)
+        
+        return best_solution, distances_history
+    
+    # Ejecutar comparaciones
+    algorithms = {
+        'Hill Climbing': hill_climbing_simple,
+        'Búsqueda Aleatoria': random_search
+    }
+    
+    results = {}
+    
+    for alg_name, alg_func in algorithms.items():
+        print(f"Ejecutando {alg_name}...")
+        alg_distances = []
+        alg_histories = []
+        
+        for run in range(num_runs):
+            solution, history = alg_func()
+            alg_distances.append(history[-1])
+            alg_histories.append(history)
+        
+        results[alg_name] = {
+            'distances': alg_distances,
+            'histories': alg_histories
+        }
+    
+    # Agregar resultado del GA (simulado para comparación)
+    print("Ejecutando Algoritmo Genético para comparación...")
+    ga_distances = []
+    ga_histories = []
+    
+    for run in range(num_runs):
+        # Versión simplificada del GA
+        population = [create_individual() for _ in range(50)]
+        best_distances = []
+        
+        for generation in range(100):  # Menos generaciones
+            population.sort(key=evaluate_fitness, reverse=True)
+            current_best = population[0]
+            best_distances.append(get_total_distance(current_best))
+            
+            # Evolución simple
+            new_population = population[:5]  # Elitismo
+            
+            while len(new_population) < 50:
+                parents = select_parents(population[:25], 2)
+                child = crossover(parents[0], parents[1])
+                child = mutate(child)
+                new_population.append(child)
+            
+            population = new_population
+        
+        ga_distances.append(best_distances[-1])
+        ga_histories.append(best_distances)
+    
+    results['Algoritmo Genético'] = {
+        'distances': ga_distances,
+        'histories': ga_histories
+    }
+    
+    # Crear gráficos comparativos
+    create_algorithm_comparison_plots(results, folder_path)
+
+def create_algorithm_comparison_plots(results, folder_path):
+    """
+    Crear gráficos de comparación entre algoritmos
+    """
+    # 1. Gráfico de convergencia
+    plt.figure(figsize=(12, 8))
+    
+    colors = ['blue', 'red', 'green', 'orange']
+    
+    for i, (alg_name, alg_data) in enumerate(results.items()):
+        histories = alg_data['histories']
+        
+        # Calcular promedio de historias
+        max_len = max(len(hist) for hist in histories)
+        avg_history = []
+        
+        for step in range(max_len):
+            step_values = []
+            for hist in histories:
+                if step < len(hist):
+                    step_values.append(hist[step])
+                else:
+                    step_values.append(hist[-1])
+            avg_history.append(np.mean(step_values))
+        
+        plt.plot(range(max_len), avg_history, 
+                color=colors[i % len(colors)], label=alg_name, linewidth=2)
+    
+    plt.xlabel('Iteración/Generación')
+    plt.ylabel('Mejor Distancia Encontrada')
+    plt.title('Comparación de Convergencia entre Algoritmos')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    convergence_filename = os.path.join(folder_path, "algorithm_convergence_comparison.png")
+    plt.savefig(convergence_filename, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # 2. Boxplot de resultados finales
+    plt.figure(figsize=(10, 6))
+    
+    data = []
+    labels = []
+    
+    for alg_name, alg_data in results.items():
+        data.append(alg_data['distances'])
+        labels.append(alg_name)
+    
+    plt.boxplot(data, labels=labels)
+    plt.ylabel('Distancia Final')
+    plt.title('Distribución de Resultados por Algoritmo')
+    plt.xticks(rotation=45)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    
+    boxplot_filename = os.path.join(folder_path, "algorithm_results_boxplot.png")
+    plt.savefig(boxplot_filename, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    print(f"Gráficos de comparación guardados en '{convergence_filename}' y '{boxplot_filename}'")
+
+def analyze_parameter_sensitivity(folder_path):
+    """
+    Análisis de sensibilidad de parámetros del algoritmo genético
+    """
+    print("Realizando análisis de sensibilidad de parámetros...")
+    
+    # Parámetros a probar
+    population_sizes = [50, 100, 150, 200]
+    mutation_rates = [0.05, 0.1, 0.15, 0.2]
+    
+    results_matrix = np.zeros((len(mutation_rates), len(population_sizes)))
+    
+    for i, mut_rate in enumerate(mutation_rates):
+        for j, pop_size in enumerate(population_sizes):
+            print(f"Probando población: {pop_size}, mutación: {mut_rate}")
+            
+            # Ejecutar GA con estos parámetros (versión corta)
+            distances = []
+            for run in range(3):  # 3 ejecuciones por combinación
+                population = [create_individual() for _ in range(pop_size)]
+                
+                for generation in range(200):  # Menos generaciones
+                    population.sort(key=evaluate_fitness, reverse=True)
+                    
+                    # Elitismo proporcional
+                    elite_size = max(1, pop_size // 10)
+                    new_population = population[:elite_size]
+                    
+                    while len(new_population) < pop_size:
+                        parents = select_parents(population[:pop_size//2], 2)
+                        child = crossover(parents[0], parents[1])
+                        child = mutate(child, mut_rate)
+                        new_population.append(child)
+                    
+                    population = new_population
+                
+                best_distance = min(get_total_distance(ind) for ind in population)
+                distances.append(best_distance)
+            
+            results_matrix[i, j] = np.mean(distances)
+    
+    # Crear heatmap
+    plt.figure(figsize=(10, 8))
+    
+    # Usar colores inversos para que menor distancia = mejor (más claro)
+    im = plt.imshow(results_matrix, cmap='viridis_r', aspect='auto')
+    
+    # Configurar etiquetas
+    plt.xticks(range(len(population_sizes)), [str(ps) for ps in population_sizes])
+    plt.yticks(range(len(mutation_rates)), [f"{mr:.2f}" for mr in mutation_rates])
+    plt.xlabel('Tamaño de Población')
+    plt.ylabel('Tasa de Mutación')
+    plt.title('Sensibilidad de Parámetros: Distancia Final Promedio')
+    
+    # Añadir colorbar
+    cbar = plt.colorbar(im)
+    cbar.set_label('Distancia Final Promedio')
+    
+    # Añadir valores en cada celda
+    for i in range(len(mutation_rates)):
+        for j in range(len(population_sizes)):
+            plt.text(j, i, f'{results_matrix[i, j]:.1f}', 
+                    ha='center', va='center', color='white', fontweight='bold')
+    
+    sensitivity_filename = os.path.join(folder_path, "parameter_sensitivity_heatmap.png")
+    plt.savefig(sensitivity_filename, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Heatmap de sensibilidad guardado en '{sensitivity_filename}'")
+
+def generate_final_report(folder_path, final_solution, min_distances, avg_distances):
+    """
+    Generar un reporte final con todas las estadísticas y análisis
+    """
+    report_filename = os.path.join(folder_path, "reporte_final_analisis.txt")
+    
+    with open(report_filename, 'w', encoding='utf-8') as f:
+        f.write("REPORTE FINAL - ANÁLISIS COMPLETO DEL TSP\n")
+        f.write("=" * 50 + "\n\n")
+        
+        f.write("1. CONFIGURACIÓN DEL PROBLEMA\n")
+        f.write("-" * 30 + "\n")
+        f.write(f"Número de ciudades: {NUM_CITIES}\n")
+        f.write(f"Ciudades: {', '.join(CITY_NAMES)}\n")
+        f.write(f"Tamaño de población: {POPULATION_SIZE}\n")
+        f.write(f"Número de generaciones: {GENERATIONS}\n")
+        f.write(f"Probabilidad de mutación: {MUTATION_PROBABILITY}\n")
+        f.write(f"Elitismo: {ELITISM_COUNT} individuos\n\n")
+        
+        f.write("2. RESULTADOS FINALES\n")
+        f.write("-" * 20 + "\n")
+        f.write(f"Mejor solución: {final_solution}\n")
+        # final_solution ya contiene los nombres de las ciudades directamente
+        route_names = final_solution  # No necesitamos hacer conversión
+        f.write(f"Ruta: {' -> '.join(route_names)} -> {final_solution[0]}\n")
+        f.write(f"Distancia final: {min_distances[-1]:.2f} km\n")
+        f.write(f"Mejora total: {min_distances[0] - min_distances[-1]:.2f} km\n")
+        f.write(f"Porcentaje de mejora: {((min_distances[0] - min_distances[-1]) / min_distances[0] * 100):.1f}%\n\n")
+        
+        f.write("3. ESTADÍSTICAS DE EVOLUCIÓN\n")
+        f.write("-" * 28 + "\n")
+        f.write(f"Distancia inicial (mejor): {min_distances[0]:.2f} km\n")
+        f.write(f"Distancia promedio inicial: {avg_distances[0]:.2f} km\n")
+        f.write(f"Distancia final (mejor): {min_distances[-1]:.2f} km\n")
+        f.write(f"Distancia promedio final: {avg_distances[-1]:.2f} km\n")
+        f.write(f"Mejor mejora en una generación: {max(min_distances[i] - min_distances[i+1] for i in range(len(min_distances)-1)):.2f} km\n\n")
+        
+        f.write("4. ARCHIVOS GENERADOS\n")
+        f.write("-" * 18 + "\n")
+        f.write("• solucion_tsp.png - Visualización de la mejor ruta\n")
+        f.write("• evolucion_algoritmo.png - Evolución del algoritmo\n")
+        f.write("• distribucion_distancias.png - Histogramas de distribución\n")
+        f.write("• algorithm_convergence_comparison.png - Comparación de convergencia\n")
+        f.write("• algorithm_results_boxplot.png - Boxplot de resultados\n")
+        f.write("• parameter_sensitivity_heatmap.png - Sensibilidad de parámetros\n")
+        f.write("• fitness_evolution_analysis.png - Análisis detallado del fitness\n")
+        f.write("• genetic_diversity_evolution.png - Evolución de la diversidad\n")
+        f.write("• exploration_exploitation_analysis.png - Análisis de exploración\n")
+        f.write("• fitness_distribution_evolution.gif - Animación de evolución\n")
+        f.write("• evolucion_tsp_log.txt - Log detallado de la ejecución\n\n")
+        
+        f.write("5. RECOMENDACIONES\n")
+        f.write("-" * 15 + "\n")
+        f.write("• Analizar los gráficos de convergencia para identificar si el algoritmo converge prematuramente\n")
+        f.write("• Revisar la evolución de la diversidad genética para detectar pérdida de variabilidad\n")
+        f.write("• Usar el heatmap de sensibilidad para optimizar parámetros\n")
+        f.write("• Comparar resultados con otros algoritmos para validar la eficacia del GA\n")
+        f.write("• Considerar ajustar parámetros si la mejora es menor al 10%\n")
+    
+    print(f"Reporte final generado: {report_filename}")
+
 # --- Ejecucion del Algoritmo ---
 if __name__ == "__main__":
+    print("=== ANÁLISIS COMPLETO DEL TSP CON ALGORITMO GENÉTICO ===")
+    
     # Asegurarse de que la carpeta base exista
     if not os.path.exists(BASE_OUTPUT_FOLDER):
         os.makedirs(BASE_OUTPUT_FOLDER)
 
     # Generar un nombre de carpeta unica para esta ejecucion (ej. Prueba_YYYYMMDD_HHMMSS)
     current_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_output_folder = os.path.join(BASE_OUTPUT_FOLDER, f"Prueba_{current_timestamp}")
+    run_output_folder = os.path.join(BASE_OUTPUT_FOLDER, f"Análisis_Completo_{current_timestamp}")
 
     # Ejecutar el algoritmo genetico y obtener los datos de evolucion
+    print("\n1. Ejecutando Algoritmo Genético...")
     final_solution, gens, avg_dists, min_dists, distances_for_hists, generations_for_hists = genetic_algorithm(run_output_folder)
     
     # Guardar el grafico de la solucion final
+    print("2. Generando gráfico de solución...")
     plot_solution(final_solution, run_output_folder)
     
     # Guardar el grafico de la evolucion del algoritmo
+    print("3. Generando gráfico de evolución...")
     plot_evolution(gens, avg_dists, min_dists, run_output_folder)
 
     # Guardar el grafico de distribucion de distancias
+    print("4. Generando histogramas de distribución...")
     plot_distance_histograms(distances_for_hists, generations_for_hists, run_output_folder)
 
-    print(f"\nTodos los resultados de esta ejecucion se encuentran en la carpeta '{run_output_folder}'.")
+    # --- ANÁLISIS AVANZADO ---
+    print("\n=== EJECUTANDO ANÁLISIS AVANZADO ===")
+    
+    # 5. Comparación de algoritmos
+    print("5. Comparando con otros algoritmos...")
+    compare_algorithm_performance(run_output_folder, num_runs=5)
+    
+    # 6. Análisis de sensibilidad de parámetros
+    print("6. Analizando sensibilidad de parámetros...")
+    analyze_parameter_sensitivity(run_output_folder)
+    
+    # 7. Ejecutar análisis con datos detallados
+    print("7. Ejecutando algoritmo genético con análisis detallado...")
+    
+    # Ejecutar una versión modificada para capturar datos detallados
+    population_history = []
+    diversity_history = []
+    
+    # Re-ejecutar para obtener datos detallados
+    population = [create_individual() for _ in range(POPULATION_SIZE)]
+    
+    for generation in range(min(500, GENERATIONS)):  # Menos generaciones para acelerar
+        population.sort(key=evaluate_fitness, reverse=True)
+        
+        # Guardar datos cada 10 generaciones
+        if generation % 10 == 0:
+            population_history.append([ind[:] for ind in population])  # Copia profunda
+        
+        # Calcular diversidad
+        diversity = calculate_genetic_diversity(population)
+        diversity_history.append(diversity)
+        
+        # Evolución estándar
+        new_population = population[:ELITISM_COUNT]
+        
+        while len(new_population) < POPULATION_SIZE:
+            parents = select_parents(population[:POPULATION_SIZE // 2], 2)
+            child = crossover(parents[0], parents[1])
+            child = mutate(child)
+            new_population.append(child)
+        
+        population = new_population
+    
+    # 8. Análisis de evolución del fitness
+    print("8. Analizando evolución del fitness...")
+    analyze_fitness_evolution(population_history, run_output_folder)
+    
+    # 9. Análisis de diversidad genética
+    print("9. Analizando diversidad genética...")
+    plot_genetic_diversity_evolution(diversity_history, run_output_folder)
+    
+    # 10. Análisis de exploración vs explotación
+    print("10. Analizando exploración vs explotación...")
+    create_exploration_exploitation_plot(population_history, run_output_folder)
+    
+    # 11. Animación de distribución del fitness
+    print("11. Creando animación de distribución del fitness...")
+    create_fitness_distribution_animation(population_history, run_output_folder)
+    
+    # 12. Generar reporte final
+    print("12. Generando reporte final...")
+    generate_final_report(run_output_folder, final_solution, min_dists, avg_dists)
+
+    print(f"\n=== ANÁLISIS COMPLETO FINALIZADO ===")
+    print(f"Todos los resultados están en: '{run_output_folder}'")
+    print("\nArchivos generados:")
+    print("- Gráficos básicos: solucion_tsp.png, evolucion_algoritmo.png, distribucion_distancias.png")
+    print("- Comparación de algoritmos: algorithm_convergence_comparison.png, algorithm_results_boxplot.png")
+    print("- Análisis de parámetros: parameter_sensitivity_heatmap.png")
+    print("- Análisis detallado: fitness_evolution_analysis.png, genetic_diversity_evolution.png")
+    print("- Exploración: exploration_exploitation_analysis.png")
+    print("- Animaciones: fitness_distribution_evolution.gif")
+    print("- Reporte: reporte_final_analisis.txt")
