@@ -28,73 +28,71 @@ CITY_NAMES = list(CITIES.keys())
 
 # Matriz de distancias en kilometros entre ciudades (redondeado a 2 decimales).
 # ********************************************************************************
-# *** IMPORTANTE: DEBES LLENAR ESTAS DISTANCIAS CON VALORES REALES DE GOOGLE MAPS ***
-# ********************************************************************************
 DISTANCES_MATRIX = {
     # Chiclayo
-    ('Chiclayo', 'Lambayeque'): 11.50, # Distancia real segun Google Maps
-    ('Chiclayo', 'Ferreñafe'): 18.00, # Distancia real segun Google Maps
-    ('Chiclayo', 'Monsefu'): 16.50, # Distancia real segun Google Maps
-    ('Chiclayo', 'Eten'): 24.10, # Distancia real segun Google Maps
-    ('Chiclayo', 'Reque'): 12.00, # Distancia real segun Google Maps
-    ('Chiclayo', 'Olmos'): 95.00, # Distancia real segun Google Maps
-    ('Chiclayo', 'Motupe'): 72.00, # Distancia real segun Google Maps
-    ('Chiclayo', 'Pimentel'): 14.50, # Distancia real segun Google Maps
-    ('Chiclayo', 'Tuman'): 28.00, # Distancia real segun Google Maps
+    ('Chiclayo', 'Lambayeque'): 4.70,     # 4.7 km :contentReference[oaicite:1]{index=1}
+    ('Chiclayo', 'Ferreñafe'): 29.50,     # estimado Google Maps (~30 km)
+    ('Chiclayo', 'Monsefu'): 18.50,       # estimado (~18.5 km)
+    ('Chiclayo', 'Eten'): 20.00,          # estimado (~20 km)
+    ('Chiclayo', 'Reque'): 10.00,         # estimado (~10 km)
+    ('Chiclayo', 'Olmos'): 106.00,        # ruta por carretera :contentReference[oaicite:2]{index=2}
+    ('Chiclayo', 'Motupe'): 81.00,        # parte de la ruta Chiclayo → Olmos :contentReference[oaicite:3]{index=3}
+    ('Chiclayo', 'Pimentel'): 14.00,      # estimado (~14 km costeros)
+    ('Chiclayo', 'Tuman'): 32.00,         # estimado (~32 km)
 
     # Lambayeque
-    ('Lambayeque', 'Ferreñafe'): 15.80, # Distancia real segun Google Maps
-    ('Lambayeque', 'Monsefu'): 23.50, # Distancia real segun Google Maps
-    ('Lambayeque', 'Eten'): 31.00, # Distancia real segun Google Maps
-    ('Lambayeque', 'Reque'): 19.50, # Distancia real segun Google Maps
-    ('Lambayeque', 'Olmos'): 85.00, # Distancia real segun Google Maps
-    ('Lambayeque', 'Motupe'): 60.00, # Distancia real segun Google Maps
-    ('Lambayeque', 'Pimentel'): 15.00, # Distancia real segun Google Maps
-    ('Lambayeque', 'Tuman'): 25.00, # Distancia real segun Google Maps
+    ('Lambayeque', 'Ferreñafe'): 25.00,   # estimado (~25 km)
+    ('Lambayeque', 'Monsefu'): 24.00,     # estimado (~24 km)
+    ('Lambayeque', 'Eten'): 26.00,        # estimado (~26 km)
+    ('Lambayeque', 'Reque'): 15.00,       # estimado (~15 km)
+    ('Lambayeque', 'Olmos'): 101.00,      # Chiclayo a Olmos menos 5 km → ~101 km
+    ('Lambayeque', 'Motupe'): 76.00,      # ruta via Motupe (~76 km)
+    ('Lambayeque', 'Pimentel'): 18.00,    # estimado (~18 km via Chiclayo)
+    ('Lambayeque', 'Tuman'): 28.00,       # estimado (~28 km)
 
     # Ferreñafe
-    ('Ferreñafe', 'Monsefu'): 22.00, # Distancia real segun Google Maps
-    ('Ferreñafe', 'Eten'): 27.00, # Distancia real segun Google Maps
-    ('Ferreñafe', 'Reque'): 28.00, # Distancia real segun Google Maps
-    ('Ferreñafe', 'Olmos'): 105.00, # Distancia real segun Google Maps
-    ('Ferreñafe', 'Motupe'): 80.00, # Distancia real segun Google Maps
-    ('Ferreñafe', 'Pimentel'): 30.00, # Distancia real segun Google Maps
-    ('Ferreñafe', 'Tuman'): 12.00, # Distancia real segun Google Maps
-    
+    ('Ferreñafe', 'Monsefu'): 22.00,      # estimado (~22 km)
+    ('Ferreñafe', 'Eten'): 27.00,         # estimado (~27 km)
+    ('Ferreñafe', 'Reque'): 28.00,        # estimado (~28 km)
+    ('Ferreñafe', 'Olmos'): 120.00,       # estimado carretero (~120 km)
+    ('Ferreñafe', 'Motupe'): 95.00,       # estimado (~95 km)
+    ('Ferreñafe', 'Pimentel'): 35.00,     # estimado (~35 km)
+    ('Ferreñafe', 'Tuman'): 12.00,        # estimado (~12 km)
+
     # Monsefu
-    ('Monsefu', 'Eten'): 8.00, # Distancia real segun Google Maps
-    ('Monsefu', 'Reque'): 6.00, # Distancia real segun Google Maps
-    ('Monsefu', 'Olmos'): 100.00, # Distancia real segun Google Maps
-    ('Monsefu', 'Motupe'): 75.00, # Distancia real segun Google Maps
-    ('Monsefu', 'Pimentel'): 10.00, # Distancia real segun Google Maps
-    ('Monsefu', 'Tuman'): 20.00, # Distancia real segun Google Maps
+    ('Monsefu', 'Eten'): 8.00,            # estimado (~8 km)
+    ('Monsefu', 'Reque'): 18.00,          # estimado (~18 km)
+    ('Monsefu', 'Olmos'): 88.00,          # estimado (~88 km)
+    ('Monsefu', 'Motupe'): 65.00,         # estimado (~65 km)
+    ('Monsefu', 'Pimentel'): 14.00,       # estimado (~14 km)
+    ('Monsefu', 'Tuman'): 15.00,          # estimado (~15 km)
 
     # Eten
-    ('Eten', 'Reque'): 5.00, # Distancia real segun Google Maps
-    ('Eten', 'Olmos'): 110.00, # Distancia real segun Google Maps
-    ('Eten', 'Motupe'): 85.00, # Distancia real segun Google Maps
-    ('Eten', 'Pimentel'): 12.00, # Distancia real segun Google Maps
-    ('Eten', 'Tuman'): 25.00, # Distancia real segun Google Maps
+    ('Eten', 'Reque'): 5.00,              # estimado (~5 km)
+    ('Eten', 'Olmos'): 102.00,            # estimado (~102 km)
+    ('Eten', 'Motupe'): 77.00,            # estimado (~77 km)
+    ('Eten', 'Pimentel'): 12.00,          # estimado (~12 km)
+    ('Eten', 'Tuman'): 25.00,             # estimado (~25 km)
 
     # Reque
-    ('Reque', 'Olmos'): 98.00, # Distancia real segun Google Maps
-    ('Reque', 'Motupe'): 72.00, # Distancia real segun Google Maps
-    ('Reque', 'Pimentel'): 8.00, # Distancia real segun Google Maps
-    ('Reque', 'Tuman'): 18.00, # Distancia real segun Google Maps
+    ('Reque', 'Olmos'): 96.00,            # estimado (~96 km)
+    ('Reque', 'Motupe'): 70.00,           # estimado (~70 km)
+    ('Reque', 'Pimentel'): 10.00,         # estimado (~10 km)
+    ('Reque', 'Tuman'): 20.00,            # estimado (~20 km)
 
     # Olmos
-    ('Olmos', 'Motupe'): 25.00, # Distancia real segun Google Maps
-    ('Olmos', 'Pimentel'): 100.00, # Distancia real segun Google Maps
-    ('Olmos', 'Tuman'): 115.00, # Distancia real segun Google Maps
+    ('Olmos', 'Motupe'): 25.00,           # estimado (~25 km)
+    ('Olmos', 'Pimentel'): 128.00,        # Chiclayo->Olmos + Chiclayo->Pimentel = 106+14
+    ('Olmos', 'Tuman'): 134.00,           # similar agregada
 
     # Motupe
-    ('Motupe', 'Pimentel'): 80.00, # Distancia real segun Google Maps
-    ('Motupe', 'Tuman'): 90.00, # Distancia real segun Google Maps
+    ('Motupe', 'Pimentel'): 90.00,        # estimado (~90 km)
+    ('Motupe', 'Tuman'): 85.00,           # estimado (~85 km)
 
     # Pimentel
-    ('Pimentel', 'Tuman'): 30.00, # Distancia real segun Google Maps
-    # Asegurate de que la matriz este completa con todas las combinaciones A-B y B-A
+    ('Pimentel', 'Tuman'): 35.00,         # estimado (~35 km)
 }
+
 
 # Anadir distancias inversas si no estan presentes (asumiendo simetria A-B = B-A)
 for (city1, city2), dist in list(DISTANCES_MATRIX.items()):
