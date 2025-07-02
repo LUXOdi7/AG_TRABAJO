@@ -2,93 +2,175 @@ import random
 import math
 import matplotlib.pyplot as plt
 import os
-import datetime # Para generar nombres de archivos únicos con la fecha y hora
+import datetime # Para generar nombres de archivos unicos con la fecha y hora
 
 # --- Configuración del Problema del Vendedor Viajero (TSP) ---
-# Definimos las coordenadas de las ciudades. Puedes añadir más o cambiar estas.
-# Cada tupla representa (x, y) de una ciudad.
-# Ejemplo con 10 ciudades.
-CITIES = {
-    'A': (0, 0),
-    'B': (1, 5),
-    'C': (4, 1),
-    'D': (6, 4),
-    'E': (8, 0),
-    'F': (2, 7),
-    'G': (7, 2),
-    'H': (3, 3),
-    'I': (5, 6),
-    'J': (9, 3)
-}
-NUM_CITIES = len(CITIES) # Número total de ciudades
-CITY_NAMES = list(CITIES.keys()) # Lista de los nombres de las ciudades
 
-# --- Algoritmo Genético: Parámetros ---
-POPULATION_SIZE = 200     # Tamaño de la población en cada generación
-GENERATIONS = 2000        # Número de generaciones a ejecutar el algoritmo
-ELITISM_COUNT = 20        # Número de los mejores individuos que pasan directamente a la siguiente generación
-MUTATION_PROBABILITY = 0.1 # Probabilidad de que un individuo sufra mutación
+# Ciudades de Lambayeque, Peru
+# NOTA: Para TSP con distancias reales, las coordenadas (X,Y) no son directamente usadas para calcular la distancia,
+#       sino principalmente para la visualizacion del mapa. Las distancias reales se definen en el diccionario DISTANCES_MATRIX.
+#       Puedes ajustar estas coordenadas si quieres una representacion mas fiel en el mapa resultante.
+CITIES = {
+    'Chiclayo':    (6, 5),
+    'Lambayeque':  (5, 6),
+    'Ferreñafe':   (7, 7),
+    'Monsefu':     (7, 4),
+    'Eten':        (8, 3),
+    'Reque':       (6.5, 3.5),
+    'Olmos':       (1, 9),
+    'Motupe':      (3, 8),
+    'Pimentel':    (6.5, 5.5),
+    'Tuman':       (7.5, 6)
+}
+
+NUM_CITIES = len(CITIES)
+CITY_NAMES = list(CITIES.keys())
+
+# Matriz de distancias en kilometros entre ciudades (redondeado a 2 decimales).
+DISTANCES_MATRIX = {
+    # Chiclayo
+    ('Chiclayo', 'Lambayeque'): 4.70,     # 4.7 km :contentReference[oaicite:1]{index=1}
+    ('Chiclayo', 'Ferreñafe'): 29.50,     # estimado Google Maps (~30 km)
+    ('Chiclayo', 'Monsefu'): 18.50,       # estimado (~18.5 km)
+    ('Chiclayo', 'Eten'): 20.00,          # estimado (~20 km)
+    ('Chiclayo', 'Reque'): 10.00,         # estimado (~10 km)
+    ('Chiclayo', 'Olmos'): 106.00,        # ruta por carretera :contentReference[oaicite:2]{index=2}
+    ('Chiclayo', 'Motupe'): 81.00,        # parte de la ruta Chiclayo → Olmos :contentReference[oaicite:3]{index=3}
+    ('Chiclayo', 'Pimentel'): 14.00,      # estimado (~14 km costeros)
+    ('Chiclayo', 'Tuman'): 32.00,         # estimado (~32 km)
+
+    # Lambayeque
+    ('Lambayeque', 'Ferreñafe'): 25.00,   # estimado (~25 km)
+    ('Lambayeque', 'Monsefu'): 24.00,     # estimado (~24 km)
+    ('Lambayeque', 'Eten'): 26.00,        # estimado (~26 km)
+    ('Lambayeque', 'Reque'): 15.00,       # estimado (~15 km)
+    ('Lambayeque', 'Olmos'): 101.00,      # Chiclayo a Olmos menos 5 km → ~101 km
+    ('Lambayeque', 'Motupe'): 76.00,      # ruta via Motupe (~76 km)
+    ('Lambayeque', 'Pimentel'): 18.00,    # estimado (~18 km via Chiclayo)
+    ('Lambayeque', 'Tuman'): 28.00,       # estimado (~28 km)
+
+    # Ferreñafe
+    ('Ferreñafe', 'Monsefu'): 22.00,      # estimado (~22 km)
+    ('Ferreñafe', 'Eten'): 27.00,         # estimado (~27 km)
+    ('Ferreñafe', 'Reque'): 28.00,        # estimado (~28 km)
+    ('Ferreñafe', 'Olmos'): 120.00,       # estimado carretero (~120 km)
+    ('Ferreñafe', 'Motupe'): 95.00,       # estimado (~95 km)
+    ('Ferreñafe', 'Pimentel'): 35.00,     # estimado (~35 km)
+    ('Ferreñafe', 'Tuman'): 12.00,        # estimado (~12 km)
+
+    # Monsefu
+    ('Monsefu', 'Eten'): 8.00,            # estimado (~8 km)
+    ('Monsefu', 'Reque'): 18.00,          # estimado (~18 km)
+    ('Monsefu', 'Olmos'): 88.00,          # estimado (~88 km)
+    ('Monsefu', 'Motupe'): 65.00,         # estimado (~65 km)
+    ('Monsefu', 'Pimentel'): 14.00,       # estimado (~14 km)
+    ('Monsefu', 'Tuman'): 15.00,          # estimado (~15 km)
+
+    # Eten
+    ('Eten', 'Reque'): 5.00,              # estimado (~5 km)
+    ('Eten', 'Olmos'): 102.00,            # estimado (~102 km)
+    ('Eten', 'Motupe'): 77.00,            # estimado (~77 km)
+    ('Eten', 'Pimentel'): 12.00,          # estimado (~12 km)
+    ('Eten', 'Tuman'): 25.00,             # estimado (~25 km)
+
+    # Reque
+    ('Reque', 'Olmos'): 96.00,            # estimado (~96 km)
+    ('Reque', 'Motupe'): 70.00,           # estimado (~70 km)
+    ('Reque', 'Pimentel'): 10.00,         # estimado (~10 km)
+    ('Reque', 'Tuman'): 20.00,            # estimado (~20 km)
+
+    # Olmos
+    ('Olmos', 'Motupe'): 25.00,           # estimado (~25 km)
+    ('Olmos', 'Pimentel'): 128.00,        # Chiclayo->Olmos + Chiclayo->Pimentel = 106+14
+    ('Olmos', 'Tuman'): 134.00,           # similar agregada
+
+    # Motupe
+    ('Motupe', 'Pimentel'): 90.00,        # estimado (~90 km)
+    ('Motupe', 'Tuman'): 85.00,           # estimado (~85 km)
+
+    # Pimentel
+    ('Pimentel', 'Tuman'): 35.00,         # estimado (~35 km)
+}
+
+
+# Anadir distancias inversas si no estan presentes (asumiendo simetria A-B = B-A)
+for (city1, city2), dist in list(DISTANCES_MATRIX.items()):
+    if (city2, city1) not in DISTANCES_MATRIX:
+        DISTANCES_MATRIX[(city2, city1)] = dist
+
+# --- Algoritmo Genetico: Parametros ---
+POPULATION_SIZE = 200     # Tamano de la poblacion en cada generacion
+GENERATIONS = 2000        # Numero de generaciones a ejecutar el algoritmo
+ELITISM_COUNT = 20        # Numero de los mejores individuos que pasan directamente a la siguiente generacion
+MUTATION_PROBABILITY = 0.1 # Probabilidad de que un individuo sufra mutacion
 
 # --- Rutas de Archivos y Carpetas ---
-OUTPUT_FOLDER = "Resultados_TSP" # Nombre de la carpeta de salida
+BASE_OUTPUT_FOLDER = "Resultados_TSP" # Nombre de la carpeta base de salida
 
 # --- Funciones Auxiliares ---
 
-def calculate_distance(city1, city2):
+def get_distance_from_matrix(city1_name, city2_name):
     """
-    Calcula la distancia euclidiana entre dos ciudades.
-    city1 y city2 son tuplas (x, y) de las coordenadas.
+    Obtiene la distancia entre dos ciudades de la matriz de distancias.
     """
-    return math.dist(city1, city2)
+    # Intentar obtener la distancia. Si no esta definida (lo cual NO deberia pasar con la matriz completa),
+    # puedes manejar un error o devolver un valor por defecto.
+    distance = DISTANCES_MATRIX.get((city1_name, city2_name))
+    if distance is None:
+        # Fallback: Esto indicaria que la DISTANCES_MATRIX no esta completa para un par de ciudades.
+        # En un escenario real, deberias asegurarte de que este diccionario este completo y correcto.
+        raise ValueError(f"Distancia no definida en DISTANCES_MATRIX entre {city1_name} y {city2_name}.")
+    return round(distance, 2) # Redondear a 2 decimales
+
 
 def get_total_distance(route):
     """
-    Calcula la distancia total de una ruta dada.
-    Una ruta es una lista de nombres de ciudades (ej: ['A', 'B', 'C', ...]).
+    Calcula la distancia total de una ruta dada usando las distancias de la matriz.
+    Una ruta es una lista de nombres de ciudades.
     La ruta comienza y termina en la primera ciudad.
     """
     total_dist = 0
     # Recorrer la ruta, sumando la distancia entre ciudades consecutivas
     for i in range(NUM_CITIES - 1):
-        city1_coords = CITIES[route[i]]
-        city2_coords = CITIES[route[i+1]]
-        total_dist += calculate_distance(city1_coords, city2_coords)
+        city1_name = route[i]
+        city2_name = route[i+1]
+        total_dist += get_distance_from_matrix(city1_name, city2_name)
     
     # Sumar la distancia de regreso a la ciudad de inicio (para cerrar el ciclo)
-    total_dist += calculate_distance(CITIES[route[-1]], CITIES[route[0]])
+    total_dist += get_distance_from_matrix(route[-1], route[0])
     return total_dist
 
-# --- Operaciones del Algoritmo Genético ---
+# --- Operaciones del Algoritmo Genetico ---
 
 def create_individual():
     """
     Crea un individuo (cromosoma) que representa una ruta.
-    Un individuo es una permutación aleatoria de los nombres de las ciudades.
+    Un individuo es una permutacion aleatoria de los nombres de las ciudades.
     """
-    individual = list(CITY_NAMES) # Inicialmente, en orden alfabético
-    random.shuffle(individual)    # Mezclamos para obtener una permutación aleatoria
+    individual = list(CITY_NAMES) # Inicialmente, en orden alfabetico
+    random.shuffle(individual)    # Mezclamos para obtener una permutacion aleatoria
     return individual
 
 def evaluate_fitness(individual):
     """
-    Evalúa la 'aptitud' de un individuo.
+    Evalua la 'aptitud' de un individuo.
     En el TSP, una menor distancia total significa una mayor aptitud.
-    Por convención, la aptitud se suele definir como 1 / (distancia total).
+    Por convencion, la aptitud se suele definir como 1 / (distancia total).
     Esto es para que el algoritmo busque maximizar la aptitud (mayor valor = mejor).
     """
     distance = get_total_distance(individual)
-    # Evitar división por cero si la distancia fuera 0 (no aplicable en TSP real con ciudades distintas)
+    # Evitar division por cero si la distancia fuera 0 (no aplicable en TSP real con ciudades distintas)
     return 1 / distance if distance > 0 else float('inf')
 
 def crossover(parent1, parent2):
     """
     Realiza el cruce (crossover) entre dos padres utilizando el Crossover de Orden (OX1).
     Este operador es adecuado para problemas donde el orden de los genes es importante
-    (como el TSP, donde la ruta es una permutación).
+    (como el TSP, donde la ruta es una permutacion).
     
     Pasos:
     1. Seleccionar un segmento aleatorio del primer padre.
-    2. Copiar ese segmento al hijo en la misma posición.
+    2. Copiar ese segmento al hijo en la misma posicion.
     3. Rellenar el resto del hijo con los genes del segundo padre,
        manteniendo el orden relativo y sin duplicados.
     """
@@ -107,7 +189,7 @@ def crossover(parent1, parent2):
     
     current_fill_index = 0
     for i in range(size):
-        if child[i] is None: # Si la posición está vacía
+        if child[i] is None: # Si la posicion esta vacia
             child[i] = fill_genes[current_fill_index]
             current_fill_index += 1
             
@@ -115,10 +197,10 @@ def crossover(parent1, parent2):
 
 def mutate(individual, prob=MUTATION_PROBABILITY):
     """
-    Realiza una mutación en el individuo mediante el intercambio de dos genes (Swap Mutation).
-    La mutación introduce variabilidad en la población y ayuda a evitar óptimos locales.
+    Realiza una mutacion en el individuo mediante el intercambio de dos genes (Swap Mutation).
+    La mutacion introduce variabilidad en la poblacion y ayuda a evitar optimos locales.
     """
-    if random.random() < prob: # La mutación ocurre solo con una cierta probabilidad
+    if random.random() < prob: # La mutacion ocurre solo con una cierta probabilidad
         # Seleccionar dos posiciones aleatorias para intercambiar
         idx1, idx2 = random.sample(range(len(individual)), 2)
         individual[idx1], individual[idx2] = individual[idx2], individual[idx1]
@@ -126,13 +208,13 @@ def mutate(individual, prob=MUTATION_PROBABILITY):
 
 def select_parents(population, num_parents_to_select):
     """
-    Selecciona padres de la población.
-    Aquí se usa un método de selección por torneo:
+    Selecciona padres de la poblacion.
+    Aqui se usa un metodo de seleccion por torneo:
     Se eligen aleatoriamente 'k' individuos y se selecciona el mejor de ellos.
     Se repite 'num_parents_to_select' veces.
     """
     selected_parents = []
-    tournament_size = 5 # Tamaño del torneo (cuántos individuos compiten)
+    tournament_size = 5 # Tamano del torneo (cuantos individuos compiten)
     for _ in range(num_parents_to_select):
         # Seleccionar individuos aleatorios para el torneo
         competitors = random.sample(population, min(tournament_size, len(population)))
@@ -141,104 +223,120 @@ def select_parents(population, num_parents_to_select):
         selected_parents.append(winner)
     return selected_parents
 
-def genetic_algorithm():
+def genetic_algorithm(run_output_folder):
     """
-    Implementación principal del Algoritmo Genético para el TSP.
-    Además de encontrar la solución, registra la evolución y guarda archivos.
+    Implementacion principal del Algoritmo Genetico para el TSP.
+    Ademas de encontrar la solucion, registra la evolucion y guarda archivos.
     """
-    # Crear la carpeta de salida si no existe
-    if not os.path.exists(OUTPUT_FOLDER):
-        os.makedirs(OUTPUT_FOLDER)
-        print(f"Carpeta '{OUTPUT_FOLDER}' creada.")
+    # Crear la carpeta de salida para esta ejecucion
+    if not os.path.exists(run_output_folder):
+        os.makedirs(run_output_folder)
+        print(f"Carpeta '{run_output_folder}' creada para esta ejecucion.")
 
-    # Generar un nombre de archivo único basado en la fecha y hora
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_filename = os.path.join(OUTPUT_FOLDER, f"evolucion_tsp_{timestamp}.txt")
+    # Generar un nombre de archivo para el log
+    log_filename = os.path.join(run_output_folder, f"evolucion_tsp_log.txt")
 
-    # Listas para almacenar datos para el gráfico de evolución
+    # Listas para almacenar datos para los graficos de evolucion
     generations_data = []
     avg_distances = []
     min_distances = []
+    
+    # Lista para almacenar distancias de poblaciones seleccionadas para histogramas
+    distances_for_histograms = []
+    generations_for_histograms = []
+    
+    # Generaciones en las que queremos capturar la distribucion de distancias
+    histogram_generations = [0, GENERATIONS // 2, GENERATIONS - 1]
+    if GENERATIONS < 3: # Asegurar que al menos la generacion 0 y la final sean capturadas si son pocas
+        histogram_generations = sorted(list(set([0, GENERATIONS - 1])))
 
-    # 1. Inicialización de la población
+
+    # 1. Inicializacion de la poblacion
     population = [create_individual() for _ in range(POPULATION_SIZE)]
     
     best_solution_overall = None
     min_distance_overall = float('inf')
     
-    print("Iniciando algoritmo genético para TSP...")
+    print("Iniciando algoritmo genetico para TSP...")
 
     # Abrir el archivo de log para escribir
-    with open(log_filename, 'w') as log_file:
-        log_file.write(f"--- Registro de la Evolución del Algoritmo Genético para TSP ---\n")
-        log_file.write(f"Parámetros: Población={POPULATION_SIZE}, Generaciones={GENERATIONS}, Elitismo={ELITISM_COUNT}, Mutación={MUTATION_PROBABILITY}\n\n")
+    # Usamos encoding='utf-8' para asegurar compatibilidad
+    with open(log_filename, 'w', encoding='utf-8') as log_file:
+        log_file.write(f"--- Registro de la Evolucion del Algoritmo Genetico para TSP ---\n")
+        log_file.write(f"Parametros: Poblacion={POPULATION_SIZE}, Generaciones={GENERATIONS}, Elitismo={ELITISM_COUNT}, Mutacion={MUTATION_PROBABILITY}\n\n")
 
         for generation in range(GENERATIONS):
-            # 2. Evaluación de la aptitud de cada individuo
+            # 2. Evaluacion de la aptitud de cada individuo
             population.sort(key=evaluate_fitness, reverse=True) # Ordenar por aptitud, de mayor a menor
 
-            # Obtener el mejor individuo de la generación actual
+            # Obtener el mejor individuo de la generacion actual
             current_best_individual = population[0]
             current_min_distance = get_total_distance(current_best_individual)
             
-            # Calcular la distancia promedio de la población actual
+            # Calcular la distancia promedio de la poblacion actual
             all_distances = [get_total_distance(ind) for ind in population]
             current_avg_distance = sum(all_distances) / len(all_distances)
 
-            # Almacenar datos para el gráfico
+            # Almacenar datos para el grafico
             generations_data.append(generation)
             avg_distances.append(current_avg_distance)
             min_distances.append(current_min_distance)
+            
+            # Capturar distancias para el histograma en generaciones clave
+            if generation in histogram_generations:
+                distances_for_histograms.append(all_distances)
+                generations_for_histograms.append(generation)
 
-            # Actualizar la mejor solución global encontrada hasta ahora
+
+            # Actualizar la mejor solucion global encontrada hasta ahora
             if current_min_distance < min_distance_overall:
                 min_distance_overall = current_min_distance
                 best_solution_overall = current_best_individual
-                log_file.write(f"Generación {generation}: NUEVA MEJOR! Distancia: {min_distance_overall:.2f} - Ruta: {best_solution_overall}\n")
+                log_file.write(f"Generacion {generation}: NUEVA MEJOR! Distancia: {min_distance_overall:.2f} - Ruta: {best_solution_overall}\n")
             else:
-                 log_file.write(f"Generación {generation}: Mejor de la generación: {current_min_distance:.2f}, Promedio: {current_avg_distance:.2f}\n")
+                 log_file.write(f"Generacion {generation}: Mejor de la generacion: {current_min_distance:.2f}, Promedio: {current_avg_distance:.2f}\n")
 
             # Imprimir progreso en consola cada 100 generaciones
             if generation % 100 == 0 or generation == GENERATIONS - 1:
-                print(f"Generación {generation}: Mejor distancia actual: {current_min_distance:.2f}, Promedio de distancia: {current_avg_distance:.2f}")
+                print(f"Generacion {generation}: Mejor distancia actual: {current_min_distance:.2f}, Promedio de distancia: {current_avg_distance:.2f}")
             
-            # Si se encuentra una solución "óptima" (distancia muy baja o que no mejora)
-            # Podrías agregar una condición de parada temprana aquí si lo deseas.
+            # Si se encuentra una solucion "optima" (distancia muy baja o que no mejora)
+            # Podrias agregar una condicion de parada temprana aqui si lo deseas.
 
-            # 3. Creación de la nueva población
+            # 3. Creacion de la nueva poblacion
             new_population = []
             
-            # Elitismo: Mantener los mejores individuos de la generación actual
+            # Elitismo: Mantener los mejores individuos de la generacion actual
             new_population.extend(population[:ELITISM_COUNT])
             
-            # Mientras la nueva población no alcance el tamaño deseado:
+            # Mientras la nueva poblacion no alcance el tamano deseado:
             while len(new_population) < POPULATION_SIZE:
-                # 4. Selección de padres
-                # Seleccionamos entre los mejores individuos de la población actual
+                # 4. Seleccion de padres
+                # Seleccionamos entre los mejores individuos de la poblacion actual
                 parents_for_breeding = select_parents(population[:POPULATION_SIZE // 2], 2)
                 parent1, parent2 = parents_for_breeding[0], parents_for_breeding[1]
                 
                 # 5. Cruce (Crossover)
                 child = crossover(parent1, parent2)
                 
-                # 6. Mutación
+                # 6. Mutacion
                 child = mutate(child)
                 
                 new_population.append(child)
                 
-            population = new_population # La nueva población reemplaza a la antigua
+            population = new_population # La nueva poblacion reemplaza a la antigua
 
-    print("\nAlgoritmo genético finalizado.")
-    print(f"Mejor solución encontrada: {best_solution_overall}")
-    print(f"Distancia mínima total: {min_distance_overall:.2f}")
+    print("\nAlgoritmo genetico finalizado.")
+    print(f"Mejor solucion encontrada: {best_solution_overall}")
+    print(f"Distancia minima total: {min_distance_overall:.2f}")
 
-    return best_solution_overall, generations_data, avg_distances, min_distances
+    return best_solution_overall, generations_data, avg_distances, min_distances, distances_for_histograms, generations_for_histograms
 
-# --- Visualización de la Solución ---
+# --- Visualizacion de la Solucion ---
 
-def plot_solution(solution_route, folder_path, timestamp):
+def plot_solution(solution_route, folder_path):
     """
-    Grafica la ruta encontrada por el algoritmo genético y la guarda en la carpeta especificada.
+    Grafica la ruta encontrada por el algoritmo genetico y la guarda en la carpeta especificada.
     """
     plt.figure(figsize=(10, 8))
     
@@ -258,50 +356,93 @@ def plot_solution(solution_route, folder_path, timestamp):
     start_city_coords = CITIES[solution_route[0]]
     plt.plot(start_city_coords[0], start_city_coords[1], 'o', color='green', markersize=12, label='Ciudad de Inicio/Fin')
 
-    plt.title(f'Solución TSP - Distancia: {get_total_distance(solution_route):.2f}')
+    plt.title(f'Solucion TSP - Distancia: {get_total_distance(solution_route):.2f}')
     plt.xlabel('Coordenada X')
     plt.ylabel('Coordenada Y')
     plt.grid(True)
     plt.legend()
     
-    # Guardar el gráfico
-    plot_filename = os.path.join(folder_path, f"solucion_tsp_{timestamp}.png")
+    # Guardar el grafico
+    plot_filename = os.path.join(folder_path, f"solucion_tsp.png")
     plt.savefig(plot_filename)
     plt.close() # Cierra la figura para liberar memoria
-    print(f"Gráfico de la solución guardado en '{plot_filename}'")
+    print(f"Grafico de la solucion guardado en '{plot_filename}'")
 
-def plot_evolution(generations, avg_distances, min_distances, folder_path, timestamp):
+def plot_evolution(generations, avg_distances, min_distances, folder_path):
     """
-    Grafica la evolución de la distancia promedio y mínima a lo largo de las generaciones.
+    Grafica la evolucion de la distancia promedio y minima a lo largo de las generaciones.
     """
     plt.figure(figsize=(12, 6))
-    plt.plot(generations, avg_distances, label='Distancia Promedio de la Población', color='blue')
-    plt.plot(generations, min_distances, label='Distancia Mínima (Mejor Solución)', color='orange')
-    plt.title('Evolución del Algoritmo Genético para TSP')
-    plt.xlabel('Generación')
+    plt.plot(generations, avg_distances, label='Distancia Promedio de la Poblacion', color='blue')
+    plt.plot(generations, min_distances, label='Distancia Minima (Mejor Solucion)', color='orange')
+    plt.title('Evolucion del Algoritmo Genetico para TSP')
+    plt.xlabel('Generacion')
     plt.ylabel('Distancia')
     plt.grid(True)
     plt.legend()
     
-    # Guardar el gráfico
-    evolution_plot_filename = os.path.join(folder_path, f"evolucion_algoritmo_{timestamp}.png")
+    # Guardar el grafico
+    evolution_plot_filename = os.path.join(folder_path, f"evolucion_algoritmo.png")
     plt.savefig(evolution_plot_filename)
     plt.close() # Cierra la figura para liberar memoria
-    print(f"Gráfico de evolución guardado en '{evolution_plot_filename}'")
+    print(f"Grafico de evolucion guardado en '{evolution_plot_filename}'")
+
+def plot_distance_histograms(data_for_hists, generations_for_hists, folder_path):
+    """
+    Grafica histogramas de la distribucion de distancias en la poblacion en generaciones clave.
+    """
+    num_plots = len(data_for_hists)
+    if num_plots == 0:
+        print("No hay datos para generar histogramas de distribucion de distancias.")
+        return
+
+    # Ajustar el tamano de la figura dinamicamente
+    fig, axes = plt.subplots(1, num_plots, figsize=(6 * num_plots, 5), sharey=True)
+    
+    # Si solo hay un subplot, axes no es un array, asi que lo envolvemos
+    if num_plots == 1:
+        axes = [axes]
+
+    for i, distances in enumerate(data_for_hists):
+        ax = axes[i]
+        gen = generations_for_hists[i]
+        ax.hist(distances, bins=20, color='skyblue', edgecolor='black')
+        ax.set_title(f'Generacion {gen}')
+        ax.set_xlabel('Distancia de Ruta')
+        if i == 0: # Solo el primer subplot necesita la etiqueta del eje Y
+            ax.set_ylabel('Frecuencia')
+        ax.grid(axis='y', alpha=0.75)
+
+    plt.suptitle('Distribucion de Distancias en la Poblacion por Generacion', fontsize=16)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95]) # Ajustar layout para el suptitle
+    
+    # Guardar el grafico
+    histograms_filename = os.path.join(folder_path, f"distribucion_distancias.png")
+    plt.savefig(histograms_filename)
+    plt.close()
+    print(f"Grafico de distribucion de distancias guardado en '{histograms_filename}'")
 
 
-# --- Ejecución del Algoritmo ---
+# --- Ejecucion del Algoritmo ---
 if __name__ == "__main__":
-    # Generar un timestamp único para esta ejecución
+    # Asegurarse de que la carpeta base exista
+    if not os.path.exists(BASE_OUTPUT_FOLDER):
+        os.makedirs(BASE_OUTPUT_FOLDER)
+
+    # Generar un nombre de carpeta unica para esta ejecucion (ej. Prueba_YYYYMMDD_HHMMSS)
     current_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_output_folder = os.path.join(BASE_OUTPUT_FOLDER, f"Prueba_{current_timestamp}")
 
-    # Ejecutar el algoritmo genético y obtener los datos de evolución
-    final_solution, gens, avg_dists, min_dists = genetic_algorithm()
+    # Ejecutar el algoritmo genetico y obtener los datos de evolucion
+    final_solution, gens, avg_dists, min_dists, distances_for_hists, generations_for_hists = genetic_algorithm(run_output_folder)
     
-    # Guardar el gráfico de la solución final
-    plot_solution(final_solution, OUTPUT_FOLDER, current_timestamp)
+    # Guardar el grafico de la solucion final
+    plot_solution(final_solution, run_output_folder)
     
-    # Guardar el gráfico de la evolución del algoritmo
-    plot_evolution(gens, avg_dists, min_dists, OUTPUT_FOLDER, current_timestamp)
+    # Guardar el grafico de la evolucion del algoritmo
+    plot_evolution(gens, avg_dists, min_dists, run_output_folder)
 
-    print(f"\nTodos los resultados se encuentran en la carpeta '{OUTPUT_FOLDER}'.")
+    # Guardar el grafico de distribucion de distancias
+    plot_distance_histograms(distances_for_hists, generations_for_hists, run_output_folder)
+
+    print(f"\nTodos los resultados de esta ejecucion se encuentran en la carpeta '{run_output_folder}'.")
